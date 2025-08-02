@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Task and Wellness Manager</title>
+<style>
+  html, body { height: 100%; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: #121235;
+    min-height: 100vh;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  .dashboard-main {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    width: 100vw;
+    box-sizing: border-box;
+  }
+  .calendar-block {
+    flex: 0 0 440px;
+    background: linear-gradient(120deg, #f3e8ff 70%, #b388ff 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    box-shadow: 5px 0 18px #44206a24;
+    min-width: 352px;
+    padding: 32px 12px 18px 12px;
+  }
+  .calendar-block h2 {
+    font-size: 1.65em;
+    font-weight: bold;
+    color: #6a11cb;
+    margin-bottom: 14px;
+  }
+  .calendar {
+    width: 390px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px #b388ff1a;
+    margin: 0 auto 22px auto;
+    padding: 15px 10px 14px 10px;
+  }
+  .calendar table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 1.05em;
+  }
+  .calendar th, .calendar td {
+    padding: 10px 0;
+    width: 14.2%;
+    cursor: pointer;
+    border-radius: 7px;
+    transition: background 0.13s;
+    user-select: none;
+    font-weight: 500;
+  }
+  .calendar th {
+    color: #5e35b1;
+    background: transparent;
+    cursor: default;
+    font-size: 1.09em;
+  }
+  .calendar td:hover { background: #e3f0fe; }
+  .calendar .selected {
+    background: #6a11cb !important;
+    color: #fff !important;
+    font-weight: bold;
+    border-radius: 7px;
+  }
+  .calendar .today {
+    border: 2px solid #ffeb3b;
+    border-radius: 8px;
+    background: #e3f2fd;
+  }
+  .calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 18px;
+  }
+  .calendar-controls button {
+    background: #6a11cb;
+    color: #fff;
+    border: none;
+    font-size: 1em;
+    border-radius: 7px;
+    padding: 3px 16px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .calendar-controls button:hover { background: #4527a0; }
+  .month-label {
+    font-weight: bold;
+    font-size: 1.28em;
+    color: #4527a0;
+    letter-spacing: 0.02em;
+    background: transparent;
+    border: none;
+    padding: 2px 0;
+    cursor: default;
+  }
+  .calendar-date-summary {
+    width: 96%;
+    margin: 10px auto 0 auto;
+    font-size: 1em;
+    background: #fff;
+    border-radius: 13px;
+    box-shadow: 0 2px 11px #ebd5ee44;
+    padding: 13px 13px 6px 13px;
+    min-height: 44px;
+    color: #322268;
+    text-align: left;
+  }
+  .calendar-date-summary h4 {
+    color: #6a11cb;
+    margin: 0 0 9px 0;
+    font-size: 1.07em;
+  }
+  .summary-task-list { margin: 0 0 6px 22px; padding: 0; }
+  .summary-task-list li { margin: 0 0 3px 0; }
+  .summary-bmi-list { margin: 0 0 0 22px; padding: 0; }
+  .summary-bmi-list li { margin: 0 0 6px 0; font-size: 0.98em; list-style-type: circle;}
+
+  /* RIGHT: TOOL AREA */
+  .right-pane {
+    flex: 1;
+    padding: 0 0 0 5vw;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+  .tool-selector {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 30px;
+    margin-top: 50px;
+    padding-left: 16px;
+  }
+  .tool-btn {
+    background: #fff;
+    color: #6a11cb;
+    border: 2.5px solid #a89afb;
+    border-radius: 12px;
+    font-size: 1.12em;
+    font-weight: 700;
+    padding: 13px 36px;
+    cursor: pointer;
+    margin-right: 18px;
+    letter-spacing: 0.04em;
+    box-shadow: 0 3px 18px #6c54f028;
+    transition: color 0.2s, border 0.2s, background 0.2s;
+  }
+  .tool-btn.active, .tool-btn:focus {
+    color: #fff;
+    background: #6a11cb;
+    border: 2.5px solid #ffeb3b;
+    outline: none;
+  }
+  .tool-content-wrap {
+    width: 460px;
+    min-height: 370px;
+    background: transparent;
+    padding-bottom: 30px;
+  }
+  /* Task Manager style */
+  .tm-card {
+    background: #fffbe6;
+    box-shadow: 0 2px 13px #ceba2170;
+    border-radius: 15px;
+    padding: 14px 38px 22px 38px;
+    color: #978600;
+    text-align: right;
+  }
+  .tm-title {
+    font-size: 1.32em;
+    color: #483f13;
+    font-weight: bold;
+    margin-bottom: 11px;
+    text-align: right;
+  }
+  #tm-taskInput { width: 70%; padding: 9px; font-size: 1em; border-radius: 7px; border: 1.5px solid #ccc; margin: 0 0 12px 0; }
+  #tm-addButton { background: #ffe066; color: #970; font-weight: 700; border: none; border-radius:7px; padding: 8px 22px;}
+  #tm-addButton:hover { background: #fff9a6; }
+  #tm-taskList { list-style: disc; margin: 12px 12px 4px 24px; text-align: right; color: #7a7816;}
+  #tm-taskList li { margin-bottom: 7px; cursor: pointer; background: #fffad3; border-radius: 7px; padding: 6px 18px 6px 0; }
+  #tm-taskList li:hover { background: #fff19c; font-weight: 700;}
+  /* Stopwatch style */
+  .sw-card {
+    background: linear-gradient(105deg,#ede7f6 40%,#b388ff 100%);
+    box-shadow: 0 4px 20px #6a11cb39;
+    border-radius: 18px;
+    padding: 14px 38px 22px 38px;
+    color: #25165a;
+    text-align: right;
+  }
+  .sw-title {
+    font-size: 1.2em;
+    color: #5f3972;
+    font-weight: bold;
+    margin-bottom: 12px;
+    text-align: right;
+  }
+  #timer {
+    font-family: 'Courier New', monospace;
+    font-size: 2em;
+    color: #373187;
+    margin-bottom: 10px;
+    text-align: right;
+    display: block;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .sw-btn {
+    margin: 0 0 0 7px;
+    background: #6a11cb;
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    font-weight: 700;
+    font-size: 0.99em;
+    padding: 9px 20px;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+  .sw-btn:hover { background: #37257a; }
+  #laps {
+    margin-top: 12px;
+    max-height: 75px;
+    overflow-y: auto;
+    text-align: right;
+    list-style-type: decimal;
+    padding-right: 3px;
+    min-height: 14px;
+  }
+  #laps li {
+    color: #4d208c;
+    background: #ebe3fc;
+    border-radius: 7px;
+    margin-bottom: 5px;
+    padding: 4px 16px 4px 0;
+    font-size: 0.98em;
+    display: block;
+    text-align: right;
+  }
+  /* BMI style */
+  .bmi-card {
+    background: linear-gradient(135deg,#f5faff 60%,#cae9ff 100%);
+    border-radius: 18px;
+    box-shadow: 0 3px 18px #6c54f077;
+    color: #0c3e72;
+    padding: 14px 38px 22px 38px;
+    align-items: flex-end;
+    text-align: right;
+  }
+  .bmi-title {
+    font-size: 1.17em;
+    color: #2472ed;
+    font-weight: bold;
+    margin-bottom: 11px;
+    text-align: right;
+  }
+  .input-row {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 16px;
+    width: 99%;
+    text-align: right;
+  }
+  #bmi label {
+    font-weight: 600;
+    min-width: 100px;
+    text-align: right;
+    display: inline-block;
+    padding-right: 4px;
+  }
+  #bmi input, #bmi select {
+    background: #e4f2fe;
+    border: 1.3px solid #51b4fd;
+    color: #063177;
+    font-weight: 500;
+    border-radius: 7px;
+    padding: 7px 10px;
+    margin: 0 2px;
+    text-align: center;
+    font-size: 0.98em;
+  }
+  #bmi input:focus, #bmi select:focus { border-color: #2196f3; background:#f2fbff;}
+  #bmi button {
+    background: #51b4fd;
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    border-radius: 7px;
+    padding: 10px 19px;
+    margin: 14px 0 0 auto;
+    cursor: pointer;
+    box-shadow: 0 2px 7px #84bcff33;
+    display: block;
+    font-size: 1em;
+  }
+  #bmi button:hover { background: #2196f3;}
+  #bmiResult {
+    margin-top: 18px;
+    font-size: 1.047em;
+    font-weight: 600;
+    text-align: right;
+    min-height: 22px;
+  }
+  #bmiGaugeWrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 13px;
+    margin-bottom: 5px;
+  }
+  #height-group-single input, #height-group-ftin input { width: 75px;}
+  .hidden { display: none; }
+  @media (max-width: 1160px) {
+    .calendar-block { min-width: 180px; width: 99vw; box-shadow: none;}
+    .right-pane { max-width: 99vw;}
+    .tool-content-wrap { width: 97vw;}
+    .tm-card, .sw-card, .bmi-card { width: 96vw;}
+    .calendar { width: 96vw;}
+  }
+  @media (max-width: 750px) {
+    .dashboard-main { flex-direction: column;}
+    .calendar-block { min-width: 100vw; }
+  }
+</style>
+</head>
+<body>
+<div class="dashboard-main">
+  <!-- LEFT SIDE: Calendar Only -->
+  <div class="calendar-block">
+    <h2>📆 Calendar</h2>
+    <div class="calendar-controls">
+      <button onclick="changeMonth(-1)">&lt;</button>
+      <span id="monthLabel" class="month-label"></span>
+      <button onclick="changeMonth(1)">&gt;</button>
+    </div>
+    <div class="calendar" id="calendar"></div>
+    <div class="calendar-date-summary" id="calendarSummary"></div>
+  </div>
+  <!-- RIGHT SIDE: Select tools -->
+  <div class="right-pane">
+    <div class="tool-selector">
+      <button class="tool-btn active" id="tab-btn-tm" onclick="showTool('tm')">Task Manager</button>
+      <button class="tool-btn" id="tab-btn-sw" onclick="showTool('sw')">Stopwatch</button>
+      <button class="tool-btn" id="tab-btn-bmi" onclick="showTool('bmi')">BMI Calculator</button>
+    </div>
+    <div class="tool-content-wrap">
+      <!-- Task Manager -->
+      <div id="tool-tm" class="tm-card">
+        <div class="tm-title">Task Manager</div>
+        <input type="text" id="tm-taskInput" placeholder="Add a new task..." />
+        <button id="tm-addButton" onclick="addTMTask()">Add</button>
+        <ul id="tm-taskList"></ul>
+        <div style="font-size:0.92em; text-align:right; color:#a88719;margin-top:8px;">
+          *Click a task to remove it.<br>
+          <button style="background:#efe13f;color:#6a11cb;border-radius:6px;border:none;margin-top:9px;padding:4px 12px;font-weight:600;cursor:pointer" onclick="saveTMTasksToCalendar()">Save Tasks to Calendar Date</button>
+        </div>
+      </div>
+      <!-- Stopwatch -->
+      <div id="tool-sw" class="sw-card hidden">
+        <div class="sw-title">Stopwatch</div>
+        <div id="timer">00:00:00.000</div>
+        <div>
+          <button class="sw-btn" onclick="startTimer()">Start</button>
+          <button class="sw-btn" onclick="pauseTimer()">Pause</button>
+          <button class="sw-btn" onclick="resetTimer()">Reset</button>
+          <button class="sw-btn" onclick="lapTimer()">Lap</button>
+        </div>
+        <ul id="laps"></ul>
+      </div>
+      <!-- BMI Calculator -->
+      <div id="tool-bmi" class="bmi-card hidden">
+        <div class="bmi-title">BMI Calculator</div>
+        <div>
+          <div class="input-row">
+            <label for="age">Age:</label>
+            <input type="number" id="age" min="1" max="120" placeholder="Years" />
+          </div>
+          <div class="input-row">
+            <label for="gender">Gender:</label>
+            <select id="gender">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+          <div class="input-row">
+            <label for="weight">Weight:</label>
+            <input type="number" id="weight" placeholder="Enter weight" min="1" />
+            <select id="weightUnit">
+              <option value="kg">kg</option>
+              <option value="lb">lbs</option>
+            </select>
+          </div>
+          <div class="input-row">
+            <label for="height">Height:</label>
+            <span id="height-group-single">
+              <input type="number" id="height" placeholder="Enter height" min="1" style="width:82px;" />
+            </span>
+            <span id="height-group-ftin" class="hidden">
+              <input type="number" id="heightFt" min="0" placeholder="ft" style="width:52px;">
+              <input type="number" id="heightIn" min="0" placeholder="in" style="width:52px;">
+            </span>
+            <select id="heightUnit" onchange="changeHeightInput()">
+              <option value="cm">cm</option>
+              <option value="m">meters</option>
+              <option value="in">inches</option>
+              <option value="ft-in">ft + in</option>
+            </select>
+          </div>
+          <button onclick="calculateAndSaveBMI()">Save BMI for Calendar Date</button>
+          <div id="bmiResult"></div>
+          <div id="bmiGaugeWrapper"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  // Calendar logic with per-date tasks/BMI
+  const today = new Date();
+  let calendarMonth = today.getMonth();
+  let calendarYear = today.getFullYear();
+  let selectedDay = today.getDate();
+  let selectedMonth = today.getMonth();
+  let selectedYear = today.getFullYear();
+  let calendarData = {}; // { 'YYYY-MM-DD': { tasks:[], bmiEntries:[] } }
+  // Show only one tool
+  function showTool(tool) {
+    document.getElementById('tool-tm').classList.toggle('hidden', tool !== 'tm');
+    document.getElementById('tool-sw').classList.toggle('hidden', tool !== 'sw');
+    document.getElementById('tool-bmi').classList.toggle('hidden', tool !== 'bmi');
+    document.getElementById('tab-btn-tm').classList.toggle('active', tool === 'tm');
+    document.getElementById('tab-btn-sw').classList.toggle('active', tool === 'sw');
+    document.getElementById('tab-btn-bmi').classList.toggle('active', tool === 'bmi');
+  }
+  // CALENDAR UI
+  function updateCalendar() {
+    const calendarDiv = document.getElementById('calendar');
+    const monthLabel = document.getElementById('monthLabel');
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    let firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
+    let daysInMonth = new Date(calendarYear, calendarMonth+1, 0).getDate();
+    let html = '<table><tr>';
+    ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => { html += "<th>"+d+"</th>"; });
+    html += "</tr><tr>";
+    for (let i=0; i<firstDay; ++i) html += "<td></td>";
+    for (let day=1; day<=daysInMonth; ++day) {
+      let classes = [];
+      if (day === selectedDay && calendarMonth === selectedMonth && calendarYear === selectedYear) classes.push('selected');
+      if (day === today.getDate() && calendarMonth === today.getMonth() && calendarYear === today.getFullYear()) classes.push('today');
+      html += `<td class="${classes.join(" ")}" onclick="selectDate(${day})">${day}</td>`;
+      if ((firstDay + day)%7 === 0 && day !== daysInMonth) html += "</tr><tr>";
+    }
+    let remaining = (firstDay + daysInMonth)%7;
+    if (remaining !== 0) for (let i=remaining; i<7; ++i) html += "<td></td>";
+    html += "</tr></table>";
+    calendarDiv.innerHTML = html;
+    monthLabel.textContent = `${monthNames[calendarMonth]} ${calendarYear}`;
+    updateCalendarSummary();
+  }
+  function changeMonth(delta) {
+    calendarMonth += delta;
+    if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
+    if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+    selectedDay = 1;
+    selectedMonth = calendarMonth;
+    selectedYear = calendarYear;
+    updateCalendar();
+  }
+  function selectDate(day) {
+    selectedDay = day;
+    selectedMonth = calendarMonth;
+    selectedYear = calendarYear;
+    updateCalendar();
+    loadTMTasksFromCalendar();
+  }
+  function calendarDateKey() {
+    return `${selectedYear}-${String(selectedMonth+1).padStart(2,'0')}-${String(selectedDay).padStart(2,'0')}`;
+  }
+  function updateCalendarSummary() {
+    const key = calendarDateKey();
+    const data = calendarData[key] || {};
+    let html = `<h4>Entries for ${key}</h4>`;
+    // Tasks
+    if (data.tasks && data.tasks.length)
+      html += `<b>Tasks:</b><ul class="summary-task-list">${data.tasks.map(t=>`<li>${t}</li>`).join('')}</ul>`;
+    // BMI
+    if (data.bmiEntries && data.bmiEntries.length)
+      html += `<b>BMI Log:</b>
+      <ul class="summary-bmi-list">${
+        data.bmiEntries.map(x=>`<li>Age: ${x.age}, Gender: ${x.gender}, Weight: ${x.weight}${x.weightUnit}, Height: ${x.heightTxt}, BMI: ${x.bmiText}</li>`).join('')
+      }</ul>`;
+    if (!(data.tasks && data.tasks.length) && !(data.bmiEntries && data.bmiEntries.length))
+      html += `<span style='color:#777'>No tasks or BMI logs for this date.</span>`;
+    document.getElementById('calendarSummary').innerHTML = html;
+  }
+  // TASK MANAGER
+  function addTMTask() {
+    const input = document.getElementById('tm-taskInput');
+    const task = input.value.trim();
+    if (task === '') return;
+    const li = document.createElement('li');
+    li.textContent = task;
+    li.onclick = () => li.remove();
+    document.getElementById('tm-taskList').appendChild(li);
+    input.value = '';
+  }
+  function saveTMTasksToCalendar() {
+    const key = calendarDateKey();
+    const list = [...document.getElementById('tm-taskList').children].map(li => li.textContent);
+    if (!calendarData[key]) calendarData[key] = { tasks: [], bmiEntries: [] };
+    calendarData[key].tasks = list;
+    updateCalendarSummary();
+  }
+  function loadTMTasksFromCalendar() {
+    const key = calendarDateKey();
+    const arr = (calendarData[key] && calendarData[key].tasks) || [];
+    const ul = document.getElementById('tm-taskList');
+    ul.innerHTML = '';
+    arr.forEach(task => {
+      const li = document.createElement('li');
+      li.textContent = task;
+      li.onclick = () => li.remove();
+      ul.appendChild(li);
+    });
+  }
+  // STOPWATCH
+  let timerInterval, elapsed = 0, running = false, lapTimes = [];
+  function updateTimer() {
+    const ms = elapsed % 1000;
+    const totalSeconds = Math.floor(elapsed / 1000);
+    const sec = totalSeconds % 60;
+    const min = Math.floor((totalSeconds / 60) % 60);
+    const hr = Math.floor(elapsed / 3600);
+    document.getElementById('timer').textContent =
+      `${hr.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}.${ms.toString().padStart(3,'0')}`;
+  }
+  function startTimer() {
+    if (!running) {
+      const startTime = Date.now() - elapsed;
+      timerInterval = setInterval(() => {
+        elapsed = Date.now() - startTime;
+        updateTimer();
+      }, 10);
+      running = true;
+    }
+  }
+  function pauseTimer() {
+    clearInterval(timerInterval);
+    running = false;
+  }
+  function resetTimer() {
+    clearInterval(timerInterval);
+    elapsed = 0;
+    running = false;
+    updateTimer();
+    lapTimes = [];
+    updateLaps();
+  }
+  function lapTimer() {
+    if (!running) return;
+    lapTimes.push(elapsed);
+    updateLaps();
+  }
+  function updateLaps() {
+    const lapsList = document.getElementById('laps');
+    lapsList.innerHTML = '';
+    for (let i = 0; i < lapTimes.length; ++i) {
+      const ms = lapTimes[i] % 1000;
+      const totalSeconds = Math.floor(lapTimes[i] / 1000);
+      const sec = totalSeconds % 60;
+      const min = Math.floor((totalSeconds / 60) % 60);
+      const hr = Math.floor(lapTimes[i] / 3600 / 1000);
+      const timeStr = `${hr.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}.${ms.toString().padStart(3,'0')}`;
+      const li = document.createElement('li');
+      li.textContent = `Lap ${i + 1}: ${timeStr}`;
+      lapsList.appendChild(li);
+    }
+  }
+  // BMI
+  function changeHeightInput() {
+    const heightUnit = document.getElementById('heightUnit').value;
+    document.getElementById('height-group-single').classList.toggle('hidden', heightUnit === 'ft-in');
+    document.getElementById('height-group-ftin').classList.toggle('hidden', heightUnit !== 'ft-in');
+  }
+  function calculateAndSaveBMI() {
+    const age = Number(document.getElementById('age').value);
+    const gender = document.getElementById('gender').value;
+    let weight = Number(document.getElementById('weight').value);
+    let heightUnit = document.getElementById('heightUnit').value;
+    const weightUnit = document.getElementById('weightUnit').value;
+    let height, heightTxt;
+    if (heightUnit === 'ft-in') {
+      const ft = Number(document.getElementById('heightFt').value);
+      const inch = Number(document.getElementById('heightIn').value);
+      if (isNaN(ft) || isNaN(inch)) { document.getElementById('bmiResult').textContent = "Please enter both feet and inches."; return; }
+      height = (ft * 12 + inch) * 0.0254;
+      heightTxt = `${ft} ft ${inch} in`;
+    } else {
+      height = Number(document.getElementById('height').value);
+      if (heightUnit === 'cm') { heightTxt = height+" cm"; height = height / 100; }
+      else if (heightUnit === 'in') { heightTxt = height+" in"; height = height * 0.0254; }
+      else if (heightUnit === 'm') { heightTxt = height+" m"; }
+    }
+    if (!age || !gender || !weight || !height || height <= 0) {
+      document.getElementById('bmiResult').textContent = "Please enter all values.";
+      document.getElementById('bmiGaugeWrapper').innerHTML = "";
+      return;
+    }
+    if (weightUnit === 'lb') weight = weight * 0.453592;
+    const bmi = weight / (height * height);
+    let type;
+    if (bmi < 18.5) type = 'Underweight';
+    else if (bmi < 25) type = 'Normal';
+    else if (bmi < 30) type = 'Overweight';
+    else type = 'Obese';
+    const bmiText = `${bmi.toFixed(2)} (${type})`;
+    document.getElementById('bmiResult').textContent = `Age: ${age}, Gender: ${gender.charAt(0).toUpperCase()+gender.slice(1)} | BMI: ${bmiText}`;
+    // Save BMI log to calendar
+    const key = calendarDateKey();
+    if (!calendarData[key]) calendarData[key] = { tasks:[], bmiEntries:[] };
+    calendarData[key].bmiEntries.push({ age, gender, weight: document.getElementById('weight').value, weightUnit, heightTxt, bmiText });
+    updateCalendarSummary();
+
+    // Draw BMI Gauge as before
+    const bmiVal = +bmi.toFixed(1);
+    let percent = 0;
+    if (bmiVal < 18.5) percent = (bmiVal / 40) * 100;
+    else if (bmiVal < 25) percent = ((bmiVal - 18.5) / (25-18.5))*20 + 100*18.5/40;
+    else if (bmiVal < 30) percent = ((bmiVal-25)/(30-25))*20 + 100*25/40;
+    else percent = Math.min(100, ((bmiVal-30)/10)*20 + 100*30/40);
+    percent = Math.max(0, Math.min(percent, 100));
+    const deg = 150 - percent*1.2;
+    const pointerColor = (type === 'Normal') ? "#25ad32" : (type === 'Overweight' ? "#ffc107" : (type === 'Obese' ? "#d32f2f" : "#1976d2"));
+    document.getElementById('bmiGaugeWrapper').innerHTML = `
+      <svg width="270" height="150" viewBox="0 0 270 150">
+        <defs>
+          <linearGradient id="bmi-gauge-green" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#64dd17"/>
+            <stop offset="90%" stop-color="#43a047"/>
+          </linearGradient>
+          <linearGradient id="bmi-gauge-yellow" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#fff59d"/>
+            <stop offset="100%" stop-color="#ffc107"/>
+          </linearGradient>
+          <linearGradient id="bmi-gauge-red" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#ffbdbd"/>
+            <stop offset="100%" stop-color="#e53935"/>
+          </linearGradient>
+        </defs>
+        <path d="M50,130 A80,80 0 1,1 220,130" stroke="url(#bmi-gauge-green)" stroke-width="16" fill="none"/>
+        <path d="M155,58 A80,80 0 0,1 193,88" stroke="url(#bmi-gauge-yellow)" stroke-width="16" fill="none"/>
+        <path d="M193,88 A80,80 0 0,1 220,130" stroke="url(#bmi-gauge-red)" stroke-width="16" fill="none"/>
+        <g>
+          <circle cx="135" cy="130" r="8" fill="#888"/>
+          <line id="pointer" x1="135" y1="130" x2="135" y2="60" stroke="${pointerColor}" stroke-width="5"
+            transform="rotate(${deg} 135 130)" />
+        </g>
+        <text x="135" y="85" text-anchor="middle" font-size="28" fill="#444" font-weight="bold">${bmiVal}</text>
+        <text x="135" y="110" text-anchor="middle" font-size="17" fill="#666">${type}</text>
+      </svg>
+    `;
+  }
+  // INIT
+  updateCalendar();
+  updateTimer();
+  window.onload = function() {
+    changeHeightInput();
+    loadTMTasksFromCalendar();
+  };
+</script>
+</body>
+</html>
